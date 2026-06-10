@@ -17,7 +17,6 @@ public class ActionData {
 
     public static class Carrier implements ActionCarrier {
         public String name;
-        public String actionString;
         public Array<String> actionArray;
         
         public Carrier() {}
@@ -25,11 +24,6 @@ public class ActionData {
         @Override
         public String getName() {
             return name;
-        }
-
-        @Override
-        public String getActionString() {
-            return actionString;
         }
 
         @Override

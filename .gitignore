@@ -3,4 +3,6 @@
 /core/build
 /core/src/main/java/java
 /core/src/main/java/javax
+/.acside
+/.gradle
 *.html

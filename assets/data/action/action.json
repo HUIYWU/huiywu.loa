@@ -2,17 +2,15 @@
     "players" : {
         "qi_wei_zi" : {
             "name" : "奇为子",
-            "actionString" : "普通攻击轸奥殛星坠霆天罡殛雷",
+            
             "actionArray" : ["animation12077", "animation12078", "animation12079", "animation08004"]
         },
         "zhan_qianren" : {
             "name" : "战千屻",
-            "actionString" : "普通攻击穷奇招唤"
             "actionArray" : ["animation07003", "animation07001"]
         },
         "zhan_tingyun" : {
             "name" : "战廷云",
-            "actionString" : "普通攻击天威震慑怒水灌顶",
             "actionArray" : ["animation05009", "animation09006", "animation12033"]
         }
     },
@@ -20,17 +18,14 @@
     "enemies" : {
         "zhan_tingyi" : {
             "name" : "战廷羿",
-            "actionString" : "普通攻击沉暇断踊凄杀",
             "actionArray" : ["animation12080", "animation12081", "animation12082", "animation12083"]
         },
         "xuanyuan_yin" : {
             "name" : "轩辕殷",
-            "actionString" : "两仪炽火"
             "actionArray" : ["animation01003"]
         },
         "kui" : {
             "name" : "夔",
-            "actionString" : "雷光狂涛",
             "actionArray" : ["animation12026", "animation12025"]
         }
     },

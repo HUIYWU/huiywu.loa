@@ -351,8 +351,6 @@ public class CharacterInfomation {
 			case 0 :
 				activeSystemInterface = SystemInterface.GANE_INFO;
 				String temp = "苍神录\n游戏版本：1.0\n制作者：万恶的藏宝图\n开发框架：libGDX 框架版本：1.14.0\nlibGDX官方网站：https://libgdx.com";
-				FontManager.updateFont(temp);
-				labelStyle.font = FontManager.font;
 				Label label = new Label(temp, labelStyle);
 				lowerTable.clear();
 				lowerTable.left().bottom().add(label).expand();
@@ -410,7 +408,6 @@ public class CharacterInfomation {
 					}
 				}
 
-				FontManager.updateFont("选择要进行的操作。");
 				labelStyle.font = FontManager.font;
 				Label label_8 = new Label("选择要进行的操作", labelStyle);
 				lowerSaveTable.left().bottom().add(label_8).expand();
@@ -524,8 +521,6 @@ public class CharacterInfomation {
 	}
 
 	private void setDialog(String text, final Label label, final int k, final int l, final ImageButton image_button) {
-		FontManager.updateFont(text);
-		markupedLabelStyle.font = FontManager.getFont();
 		if (tips == null) {		
 			tips = new Label(text, markupedLabelStyle);
 			tips.setFontScale(1.1f);

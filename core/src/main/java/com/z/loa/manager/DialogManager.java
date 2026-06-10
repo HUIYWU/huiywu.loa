@@ -17,7 +17,7 @@ import com.z.loa.entity.player.*;
 import com.z.loa.screen.*;
 
 public class DialogManager {
-	public static boolean isTextPlaying = false;
+    public static boolean isTextPlaying = false;
 	public static boolean isTextEnd = false;
 	public static boolean isDialogueEnd = false;
 	public static NPC activeNPC;
@@ -57,10 +57,12 @@ public class DialogManager {
 		TextureRegionDrawable dialogue_wait_drawable = new TextureRegionDrawable(dialogue_wait_region);
 		dialogue_wait_drawable.setMinSize(Constants.WIDTH * 7 / 108, Constants.HEIGHT * 7 / 456);
 		this.windowStyle = new Dialog.WindowStyle(TitleScreen.font, Color.BLACK, dialogue_frame_drawable);
-		this.nameStyle = new Label.LabelStyle(FontManager.font, Color.WHITE);
-		this.messageStyle = new Label.LabelStyle(FontManager.font, Color.WHITE);
-		this.dialogueWaitStyle = new Label.LabelStyle(FontManager.font, Color.WHITE);
+		this.nameStyle = new Label.LabelStyle(FontManager.getFont(), Color.WHITE);
+		this.messageStyle = new Label.LabelStyle(FontManager.getFont(), Color.WHITE);
+		this.dialogueWaitStyle = new Label.LabelStyle(FontManager.getFont(), Color.WHITE);
 		this.optionStyle = new TextButton.TextButtonStyle();
+        optionStyle.font = FontManager.getFont();
+        optionStyle.fontColor = Color.BLACK;
 		this.scrollPaneStyle = new ScrollPane.ScrollPaneStyle();
 		dialogueWaitStyle.background = dialogue_wait_drawable;
 		this.simpleDialog = new Dialog("", windowStyle);
@@ -73,9 +75,8 @@ public class DialogManager {
 	public static void loadDialogues(String file_name) {
 		FileHandle file = Gdx.files.internal("data/dialogue/dialogue" + file_name + ".json");
 		Json json = new Json();
-		//使用libGDX提供的ObjectMap来进行json反序列化，可以免去一些中间步骤
+		//使用libGDX提供的ObjectMap进行json反序列化，免去一些中间步骤
 		dialogueData = json.fromJson(DialogueData.class, file);
-
 	}
 
 	public Dialog getDialog(String c_dialogue) {
@@ -91,13 +92,6 @@ public class DialogManager {
 				temp.append(s);
 			}
 		}
-		if (FontManager.updateFont(dialogue.text + character.name + temp + "是否")) {
-			nameStyle.font = FontManager.getFont();
-			messageStyle.font = FontManager.getFont();
-			optionStyle.font = FontManager.getFont();
-			dialogueWaitStyle.font = FontManager.getFont();
-			optionStyle.fontColor = Color.BLACK;
-		}
 		if (dialogue.layoutType.equals("simple")) {
 			return simpleDialog();
 		}
@@ -112,19 +106,18 @@ public class DialogManager {
 			name = new Label(name_s, nameStyle);
 			name.setFontScale(1.10f);
 		}
-
-		name.setStyle(nameStyle);
 		name.setText(character.name);
+        
 		Image avatar = new Image(avatarDrawable);
 		avatar.setScaling(Scaling.fit);
-
 		float imgHeight = Constants.HEIGHT_RATIO * 57;
 		float imgWidth = imgHeight * (avatarDrawable.getMinWidth() / avatarDrawable.getMinHeight()); // 保证宽高
-		Table left_column = new Table();
 		Container<Image> container = new Container<Image>(avatar);
 		container.size(imgWidth, imgHeight);
 		container.fill().left().top();
 		container.padLeft(10f);
+        
+        Table left_column = new Table();
 		left_column.add(container).padBottom(-65).row();
 		left_column.add(name);
 		content.add(left_column).left().padLeft(18).padRight(8);
@@ -137,7 +130,7 @@ public class DialogManager {
 			message.setText("");
 		}
 		dialogueWait.setVisible(false);
-		message.setStyle(messageStyle);
+		
 		scrollPane.setActor(message);
 		Table right_column = new Table();
 		right_column.left().top();
@@ -163,8 +156,10 @@ public class DialogManager {
 		message.setAlignment(Align.center);
 		message.setWrap(true);
 		dialogueWait = new Label("", dialogueWaitStyle);
-		dialogueWait.addAction(Actions.forever(Actions.sequence(Actions.moveBy(0, 10, 1.0f, Interpolation.sine),
-				Actions.moveBy(0, -10, 1.0f, Interpolation.sine))));
+		dialogueWait.addAction(Actions.forever(Actions.sequence(
+            Actions.moveBy(0, 10, 1.0f, Interpolation.sine),
+			Actions.moveBy(0, -10, 1.0f, Interpolation.sine)
+        )));
 		scrollPaneStyle.vScroll = null;
 		scrollPaneStyle.vScrollKnob = null;
 
@@ -306,30 +301,32 @@ public class DialogManager {
 		final Array<int[]> markup_ranges = initialiseBeforeAnimation(text);
 		final int[] char_index = {0};
         
-		message.addAction(Actions.forever(Actions.sequence(Actions.delay(0.02f), Actions.run(new Runnable() {
-			@Override
-			public void run() {
-				if (char_index[0] < text.length()) {
-					if (!markup_ranges.isEmpty()) {
-						for (int[] i : markup_ranges) {
-							if (char_index[0] >= i[0] && char_index[0] <= i[1]) {
-								char_index[0] = i[1];
-								break;
-							}
-						}
-					}
-					message.setText(text.substring(0, char_index[0] + 1));
-					activeAutoScrollY(4.0f);
-					char_index[0]++;
-
-				} else {
-					message.clearActions();
-					dialogueWait.setVisible(true);
-					isTextEnd = true;
-				}
-			}
-
-		}))));
+		message.addAction(Actions.forever(Actions.sequence(
+            Actions.delay(0.02f), 
+            Actions.run(new Runnable() {
+    			@Override
+    			public void run() {
+    				if (char_index[0] < text.length()) {
+    					if (!markup_ranges.isEmpty()) {
+    						for (int[] i : markup_ranges) {
+    							if (char_index[0] >= i[0] && char_index[0] <= i[1]) {
+    								char_index[0] = i[1];
+    								break;
+    							}
+    						}
+    					}
+    					message.setText(text.substring(0, char_index[0] + 1));
+    					activeAutoScrollY(4.0f);
+    					char_index[0]++;
+    
+    				} else {
+    					message.clearActions();
+    					dialogueWait.setVisible(true);
+    					isTextEnd = true;
+    				}
+    			}
+    		}
+        ))));
 	}
 
 	private void activeAutoScrollY(final float speed) {

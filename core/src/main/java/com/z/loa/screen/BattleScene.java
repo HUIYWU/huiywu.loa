@@ -17,6 +17,8 @@ import com.z.loa.entity.event.battle.EffectFinishEvent;
 import com.z.loa.entity.event.battle.EffectTriggerEvent;
 import com.z.loa.entity.player.*;
 import com.z.loa.manager.*;
+import com.z.loa.ui.StateProgressTable;
+import com.z.loa.ui.TwinLabelMarquee;
 
 public class BattleScene {
 	private Stage battleStage;
@@ -36,7 +38,7 @@ public class BattleScene {
     private Table[] skillTables;
     //private Table itemTable;
 	private BottomBar activeBar;
-	private TextureRegionDrawable[] drawable;
+	private TextureRegionDrawable[] drawable;//通常用于各部分背景
     private TextureRegionDrawable[][] avatarDrawables;
 	private TextButton[] buttons;
 	private ObjectMap<String, Animation<TextureRegion>> effectAnimationMap;
@@ -45,6 +47,7 @@ public class BattleScene {
     private ObjectMap<BaseEntity, Table> playerSkillTableMap;
     private ObjectMap<BaseEntity, Image> avatarMap;
     private ObjectMap<CheckBox, BaseEntity> checkEntityMap;
+    private ObjectMap<BaseEntity, Label> floatingLabelMap;//伤害或回复数值显示
     
 	private Group characterGroup;
 	private Array<BaseEntity> characterArray;
@@ -55,6 +58,7 @@ public class BattleScene {
     private ButtonGroup<CheckBox> enemyCheckBoxGroup;
 	private Dialog dialog;
     private Dialog checkDialog;
+    private Dialog endedDialog;
 	private Label.LabelStyle messageStyle;
 
 	private Image buttonMask;
@@ -62,11 +66,8 @@ public class BattleScene {
 
 	private TwinLabelMarquee twin;
 	private Container<TwinLabelMarquee> container;
-    private Table[] progressTables;
-    private ProgressBar[] hpBars;
-    private ProgressBar[] mpBars;
-    private Label[] hpLabels;
-    private Label[] mpLabels;
+    public StateProgressTable[] hpProgressTables;
+    private StateProgressTable[] mpProgressTables;
     private Table[] characters;
     
     private BattleActionManager actionManager;
@@ -81,7 +82,7 @@ public class BattleScene {
         SKILL,
         ITEM,
         ESCAPE,
-        AUTO
+        AUTO;
     }
 
 	public BattleScene(MyGdxGame game) {
@@ -150,6 +151,7 @@ public class BattleScene {
         playerArray = new Array<BaseEntity>();
         pendingAddEffects = new Array<EffectActor>();
         pendingRemoveEffects = new Array<EffectActor>();
+        floatingLabelMap = new ObjectMap<BaseEntity, Label>();
 		battleStack.add(characterGroup);
         actionManager = new BattleActionManager(characterArray, this);
         effectManager = new EffectManager(this, characterGroup, pendingAddEffects);
@@ -160,9 +162,10 @@ public class BattleScene {
         zhanTingyun.init();
         zhanTingyun.setPosition(battleStack.getWidth() - zhanTingyun.getWidth(), battleStack.getHeight() * 1 / 16);
         characterGroup.clear();
-        if(!characterArray.isEmpty()) {
+        if (!characterArray.isEmpty()) {//一般用于二次进入场景
         	for(BaseEntity e : characterArray) {
         		characterGroup.addActor(e);
+                characterGroup.addActor(floatingLabelMap.get((e)));
         	}
             return;
         }
@@ -188,14 +191,21 @@ public class BattleScene {
         characterGroup.addActor(zhan_qianren);
 		characterGroup.addActor(zhanTingyun);
         if (characterArray.isEmpty()) {
-            for (int i = 0; i < characterGroup.getChildren().size; i++) {
-                characterArray.add((BaseEntity) characterGroup.getChild(i));
+            for (int i = 0; i < 6; i ++) {//通常用于首次进入
+                BaseEntity entity = (BaseEntity) characterGroup.getChild(i);
+                Label.LabelStyle style = new Label.LabelStyle(FontManager.getFont(), Color.WHITE);
+                Label label = new Label("", style);
+                label.setPosition(entity.getX() + entity.getWidth()/ 2, entity.getY() + entity.getHeight() / 2);
+                characterGroup.addActor(label);
+                characterArray.add(entity);
+                floatingLabelMap.put(entity, label);
             }
             playerArray.add(qi_wei_zi, zhan_qianren, zhanTingyun);
         }
         turnManager = new TurnManager(characterArray, playerArray, this);
-        turnManager.init(actionManager, effectManager);
+        turnManager.init(actionManager, effectManager, floatingLabelMap);
         setCheckDialog();
+        setEndedDialog();
     }
     
 
@@ -245,7 +255,6 @@ public class BattleScene {
 			if (animation.isAnimationFinished(stateTime)) {
                 pendingRemoveEffects.add(this);
                 target.fire(new EffectFinishEvent());
-                //pool.free(this);
 			}
 		}
 
@@ -260,7 +269,6 @@ public class BattleScene {
 		buttonMask.setColor(0, 0, 0, 0.4f);
         buttonTable.setBackground(drawable[1]);
 		String[] temp = {"[GOLD]状态", "[BLACK]攻击", "[BLACK]技能", "[BLACK]道具", "[BLACK]逃离", "[BLACK]自动"};
-		FontManager.updateFont("状态攻击技能道具逃离自动");
 		TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
 		style.font = FontManager.getFont();
 		stringMap = new ObjectMap<TextButton, String>();
@@ -328,7 +336,7 @@ public class BattleScene {
 				showSkillList();
 				break;
 			case ITEM :
-                
+                //endedDialog.show(battleStage);
 				break;
 			case ESCAPE :
                 zhanTingyun.recoverPosition();
@@ -389,9 +397,7 @@ public class BattleScene {
     
     public void enablePlayerControl(BaseEntity entity) {
             String cn_name = BattleActionConfig.getCarrierData(entity.getName()).getName();
-            if(FontManager.updateFont(cn_name)) {
-            	messageStyle.font = FontManager.getFont();
-            }
+            
             twin.setText(cn_name + "行动中", true);
             recoverLowerPart();
     }
@@ -470,9 +476,7 @@ public class BattleScene {
                             checkDialog.show(battleStage);
                         } else {
                             String temp = config.getTips();
-                            if (FontManager.updateFont(temp)) {
-                                messageStyle.font = FontManager.getFont();
-                            }
+                            
                             twin.setIsPaused();
                             twin.setText(temp, false);
                         }
@@ -560,7 +564,7 @@ public class BattleScene {
                     EffectActor effect_actor = pendingAddEffects.get(i);
                     characterGroup.addActorAfter(effect_actor.aim, effect_actor);
                 }
-            } else if (!turnManager.isEventRound()) {
+            } else {
                 for (int i = 0; i < pendingRemoveEffects.size; i++) {
                     EffectActor effect = pendingRemoveEffects.get(i);
                     characterGroup.removeActor(effect);
@@ -568,7 +572,12 @@ public class BattleScene {
                 }
                 pendingRemoveEffects.clear();
             }
+            if(turnManager.isBattleEnded()) {
+                endedDialog.show(battleStage);
+                turnManager.resetBattleEnded();
+            }
         }
+        
         
 		battleStage.act();
 		battleStage.draw();
@@ -583,7 +592,8 @@ public class BattleScene {
 		@Override
 		public void draw(Batch batch, float x, float y, float width, float height) {
             float offset_x =  x + Constants.WIDTH_RATIO;
-            float offset_width = width - 2 * Constants.WIDTH_RATIO;
+            float temp = width - 2 * Constants.WIDTH_RATIO;
+            float offset_width = temp >= 0 ? temp : 0;
 			super.draw(batch, offset_x, y, offset_width, height);
 		}
 	}
@@ -607,16 +617,12 @@ public class BattleScene {
         avatarMap = new ObjectMap<BaseEntity, Image>();
 		TextureAtlas texture_atlas = new TextureAtlas("battle/state/packer-5.atlas");
         characters = new Table[3];
-        progressTables = new Table[3];
-        hpBars = new ProgressBar[3];
-        mpBars = new ProgressBar[3];
-        hpLabels = new Label[3];
-        mpLabels = new Label[3];
+        hpProgressTables = new StateProgressTable[3];
+        mpProgressTables = new StateProgressTable[3];
         String[] temp = {"1001006", "1001003", "1001002"};
         avatarDrawables = new TextureRegionDrawable[temp.length][7];
         for(int i = 0; i < temp.length; i ++) {
         	characters[i] = new Table();
-            progressTables[i] = new Table();
             
             avatarStack = new Stack();
             TextureAtlas atlas = new TextureAtlas("battle/state/face" + temp[i] + ".atlas");
@@ -635,17 +641,11 @@ public class BattleScene {
             avatarStack.add(avatar);
             setAvatarDrawable(entity, avatar, i);
             
-
-            hpBars[i] = setHpBar(texture_atlas, playerArray.get(i).getMaxHp());
-            mpBars[i] = setMpBar(texture_atlas, playerArray.get(i).getMaxMp());
-		    hpLabels[i] = setHpLabel(i);
-		    mpLabels[i] = setMpLabel(i);
-            progressTables[i].left().bottom().add(hpLabels[i]).expand().fill().row();
-		    progressTables[i].left().bottom().add(hpBars[i]).fill().row();
-		    progressTables[i].left().bottom().add(mpLabels[i]).expand().fill().row();
-		    progressTables[i].left().bottom().add(mpBars[i]).fill();
+            hpProgressTables[i] = setHpProgress(texture_atlas, playerArray.get(i).getMaxHp());
+            mpProgressTables[i] = setMpProgress(texture_atlas, playerArray.get(i).getMaxMp());
 		    characters[i].left().bottom().add(avatarStack).padTop(9.0f).height(Constants.HEIGHT_RATIO * 29.0f).fill().row();
-		    characters[i].left().bottom().add(progressTables[i]).expand().fill();
+		    characters[i].left().bottom().add(hpProgressTables[i]).expand().fill().row();
+		    characters[i].left().bottom().add(mpProgressTables[i]).expand().fill();
         }
         stateTable.left().bottom().add(characters[0]).padBottom(9.0f).padLeft(15.71f).width(Constants.WIDTH_RATIO * 54.0f).expandY().fill();
 	    stateTable.left().bottom().add(characters[1]).padBottom(9.0f).padLeft(15.71f).width(Constants.WIDTH_RATIO * 54.0f).expandY().fill();
@@ -691,60 +691,34 @@ public class BattleScene {
                 break;
         }
     }
-
-    private ProgressBar setHpBar(TextureAtlas atlas, float max) {
-		ProgressBar.ProgressBarStyle style = new ProgressBar.ProgressBarStyle();
-		style.background = new TextureRegionDrawable(atlas.findRegion("bar", 1));
-		style.background.setMinSize(243.0f, 22.4f);
-		style.knobBefore = new OffsetKnobDrawable(atlas.findRegion("bar_step", 1));
-		style.knobBefore.setMinSize(13.5f, 13.5f);
-		ProgressBar bar = new ProgressBar(0.0f, max, 1.0f, false, style);
-		bar.setValue(max);
-        bar.setAnimateDuration(0.2f);
-        bar.setAnimateInterpolation(Interpolation.smooth);
-		return bar;
-	}
     
-    private ProgressBar setMpBar(TextureAtlas atlas, float max) {
-		ProgressBar.ProgressBarStyle style = new ProgressBar.ProgressBarStyle();
-		style.background = new TextureRegionDrawable(atlas.findRegion("bar", 2));
-		style.background.setMinSize(243.0f, 22.4f);
-		style.knobBefore = new OffsetKnobDrawable(atlas.findRegion("bar_step", 2));
-		style.knobBefore.setMinSize(13.5f, 13.5f);
-		ProgressBar bar = new ProgressBar(0f, max, 1.0f, false, style);
-		bar.setValue(max);
-        bar.setAnimateDuration(0.2f);
-        bar.setAnimateInterpolation(Interpolation.smooth);
-		return bar;
-	}
-
-    private Label setHpLabel(int i) {
-        BaseEntity player = playerArray.get(i);
-		if (hpLabels[i] != null) {
-			hpLabels[i].setText(player.getRemainHp() + "/" + player.getMaxHp());
-			return hpLabels[i];
-		}
-		Label.LabelStyle style = new Label.LabelStyle();
-		style.font = FontManager.getFont();
-		Label label = new Label(player.getRemainHp() + "/" + player.getMaxHp(), style);
-		label.setFontScaleY(0.5f);
-        label.setAlignment(Align.center);
-		return label;
-	}
+    private StateProgressTable setHpProgress(TextureAtlas atlas, float max) {
+    	ProgressBar.ProgressBarStyle p_style = new ProgressBar.ProgressBarStyle();
+		p_style.background = new TextureRegionDrawable(atlas.findRegion("bar", 1));
+		p_style.background.setMinSize(243.0f, 22.4f);
+        //ProgressBar的konbBefore konb knobAfter (假设从左向右填充)
+        //以可供拖动的knob为分界(可选)，之前为已完成填充，之后为未完成填充(可选)
+		p_style.knobBefore = new OffsetKnobDrawable(atlas.findRegion("bar_step", 1));
+		p_style.knobBefore.setMinSize(13.5f, 13.5f);
+        Label.LabelStyle l_style = new Label.LabelStyle();
+		l_style.font = FontManager.getFont();
+        StateProgressTable state_progress = new StateProgressTable(0, max, 1, false, p_style, l_style);
+        state_progress.progressLabel.setFontScaleY(0.5f);
+        return state_progress;
+    }
     
-    private Label setMpLabel(int i) {
-        BaseEntity player = playerArray.get(i);
-		if (mpLabels[i] != null) {
-			mpLabels[i].setText(player.getRemainMp() + "/" + player.getMaxMp());
-			return mpLabels[i];
-		}
-		Label.LabelStyle style = new Label.LabelStyle();
-		style.font = FontManager.getFont();
-		Label label = new Label(player.getRemainMp() + "/" + player.getMaxMp(), style);
-		label.setFontScaleY(0.5f);
-        label.setAlignment(Align.center);
-		return label;
-	}
+    private StateProgressTable setMpProgress(TextureAtlas atlas, float max) {
+    	ProgressBar.ProgressBarStyle p_style = new ProgressBar.ProgressBarStyle();
+		p_style.background = new TextureRegionDrawable(atlas.findRegion("bar", 2));
+		p_style.background.setMinSize(243.0f, 22.4f);
+		p_style.knobBefore = new OffsetKnobDrawable(atlas.findRegion("bar_step", 2));
+		p_style.knobBefore.setMinSize(13.5f, 13.5f);
+        Label.LabelStyle l_style = new Label.LabelStyle();
+		l_style.font = FontManager.getFont();
+        StateProgressTable state_progress = new StateProgressTable(0, max, 1, false, p_style, l_style);
+        state_progress.progressLabel.setFontScaleY(0.5f);
+        return state_progress;
+    }
 
 	public void hide() {
 		visible = false;
@@ -798,15 +772,8 @@ public class BattleScene {
                 }
             }
         };
-        
-        String temp = "选择一个目标任意即此默认可全部确定取消";
-        for(BaseEntity entity : characterArray) {
-            String cn_name = BattleActionConfig.getCarrierData(entity.getName()).getName();
-            temp += cn_name;
-        }
-        FontManager.updateFont(temp);
         messageStyle.font = FontManager.getFont();
-        Label tip = new Label("选择一个目标", messageStyle);
+        Label tip = new Label("", messageStyle);
         Drawable check_box_off = new TextureRegionDrawable(split[0][0]);
         check_box_off.setMinSize(13.0f * Constants.WIDTH_RATIO, 13.0f * Constants.HEIGHT_RATIO);
         Drawable check_box_on = new TextureRegionDrawable(split[0][1]);
@@ -852,6 +819,26 @@ public class BattleScene {
         button_table.padBottom(5.0f * Constants.HEIGHT_RATIO);
         
     }
+    
+    private void setEndedDialog() {
+    	Drawable d = new TextureRegionDrawable(new Texture(Gdx.files.internal("battle/state/info_ended.png")));
+		d.setMinSize(Constants.WIDTH_RATIO * 130.0f, Constants.HEIGHT_RATIO * 28.0f);
+        Dialog.WindowStyle style = new Dialog.WindowStyle(TitleScreen.font, Color.BLACK, d);;
+        endedDialog = new Dialog("", style);
+        Label tip = new Label("战斗结束", messageStyle);
+        endedDialog.getContentTable().add(tip);
+        endedDialog.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                super.clicked(event, x, y);
+                zhanTingyun.recoverPosition();
+                endedDialog.hide(Actions.fadeOut(0.2f));
+                hide();
+            }
+            
+        });
+        endedDialog.pack();
+    }
 
 	public boolean isVisible() {
 		return visible;
@@ -864,7 +851,9 @@ public class BattleScene {
     public ObjectMap<CheckBox, BaseEntity> getCheckEntityMap() {
         return checkEntityMap;
     }
-    
+    public Array<BaseEntity> getPlayerArray() {
+    	return playerArray;
+    }
 }
 
 

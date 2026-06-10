@@ -2,14 +2,7 @@
 eclipse.project.name = appName + '-core'
 
 dependencies {
-    sourceSets {
-        main {
-            java {
-                exclude 'java/**', 'javax/**'
-            }
-        }
-    }
-    
+
 	api "com.badlogicgames.gdx:gdx:$gdxVersion"
     api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
     api "com.badlogicgames.gdx:gdx-box2d:3.1.1-0"

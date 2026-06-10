@@ -4,7 +4,7 @@ apply plugin: 'com.android.application'
 android {
     namespace = 'com.z.loa'
     compileSdk = 36
-  
+    
 	sourceSets {
 		main {
 			manifest.srcFile 'AndroidManifest.xml'
@@ -98,9 +98,6 @@ dependencies {
 	natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
 }
 
-// Called every time gradle gets executed, takes the native dependencies of
-// the natives configuration, and extracts them to the proper libs/ folders
-// so they get packed with the APK.
 task copyAndroidNatives() {
 	doFirst {
 		file("libs/armeabi-v7a/").mkdirs()

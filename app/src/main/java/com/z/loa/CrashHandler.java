@@ -37,21 +37,16 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     
     public void init(Context context) {
         this.context = context.getApplicationContext();
-        // 获取系统默认的异常处理器
         defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
-        // 设置当前类为默认异常处理器
         Thread.setDefaultUncaughtExceptionHandler(this);
     }
     
     @Override
     public void uncaughtException(Thread thread, Throwable ex) {
-        // 1. 保存崩溃日志
         saveCrashLog(ex);
-        // 2. 显示提示及转储目录
+        // 显示转储目录提示
         showToast();
-        // 3. 延迟后退出或重启
         restartApp();
-        // 4. 调用系统默认处理器
         if (defaultHandler != null) {
             defaultHandler.uncaughtException(thread, ex);
         }
@@ -59,10 +54,8 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     
     private void saveCrashLog(Throwable ex) {
         try {
-            // 获取崩溃时间
             String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                     .format(new Date());
-            // 构建崩溃信息
             StringBuilder sb = new StringBuilder();
             sb.append("=== 崩溃时间: ").append(time).append(" ===\n");
             sb.append("=== 设备信息 ===\n");
@@ -71,7 +64,6 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             sb.append("Android版本: ").append(android.os.Build.VERSION.RELEASE).append("\n");
             sb.append("SDK版本: ").append(android.os.Build.VERSION.SDK_INT).append("\n");
             sb.append("应用版本: ").append(getAppVersion()).append("\n\n");
-            // 堆栈跟踪
             sb.append("=== 异常堆栈 ===\n");
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -79,10 +71,8 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             sb.append(sw.toString());
             pw.close();
             sw.close();
-            
-            // 保存到文件
+                    
             saveToFile(sb.toString());
-            // 同时保存到内存（便于立即访问）
             saveToMemory(sb.toString());
             
         } catch (Exception e) {
@@ -174,20 +164,17 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
                                android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
             }
-            // 结束当前进程
             android.os.Process.killProcess(android.os.Process.myPid());
             System.exit(1);
         }, 2000);
     }
     
-    // 获取最近一次崩溃日志
     public String getLastCrashLog() {
         android.content.SharedPreferences sp = context.getSharedPreferences("crash_info", 
                 Context.MODE_PRIVATE);
         return sp.getString("last_crash", "");
     }
     
-    // 获取所有崩溃日志文件
     public List<File> getAllCrashLogs() {
         List<File> logs = new ArrayList<>();
         try {
@@ -196,7 +183,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
                 logDir = new File(context.getExternalFilesDir(null), "crash_logs");
             } else {
                 logDir = new File(Environment.getExternalStorageDirectory(), 
-                        "Android/data/" + context.getPackageName() + "/crash_logs");
+                        "Android/data/" + context.getPackageName() + "/files/crash_logs");
             }
             
             if (logDir.exists() && logDir.isDirectory()) {

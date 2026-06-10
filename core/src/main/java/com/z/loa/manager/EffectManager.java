@@ -2,8 +2,10 @@ package com.z.loa.manager;
 
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.Pool;
@@ -26,7 +28,7 @@ public class EffectManager {
     }
     
     /**
-     * @param target 一般用于发起特效结束事件，在特殊分支用于定位顺序
+     * @param target  特效事件源对象，在特殊分支用于定位z层级
      */
     public void postEffect(BattleActionConfig config, BaseEntity target, Array<BaseEntity> aims) {
     	String id = config.getEffectId();
@@ -43,7 +45,7 @@ public class EffectManager {
                 BattleScene.EffectActor effect_actor = pool.obtainEffect(id, target, target, x, y, width, height);
                 pendingAddEffects.add(effect_actor);
                 for(BaseEntity aim_1 : aims) {
-                	aim_1.setBattleState(BaseEntity.BattleState.DEFEATED);
+                	aim_1.setBattleState(BaseEntity.BattleState.DEFEND);
                 }
                 break;
             } else {
@@ -73,6 +75,9 @@ public class EffectManager {
                 @Override
                 public void run() {
                     objective.hitFlash(count, duration, rgb);
+                    if (!battleScene.getPlayerArray().contains(objective, true)) {
+                    	objective.addAction(Actions.repeat(count, Actions.sequence(Actions.moveBy(15, 0, 0.15f, Interpolation.sine), Actions.moveBy(-15, 0, 0.05f, Interpolation.sine))));
+                    }
                 }
             },delay_time);
         }
@@ -81,7 +86,7 @@ public class EffectManager {
     public class EffectPool extends Pool<BattleScene.EffectActor> {
         @Override
         protected BattleScene.EffectActor newObject() {
-            return battleScene. new EffectActor();
+            return battleScene.new EffectActor();
         }
 
         @Override

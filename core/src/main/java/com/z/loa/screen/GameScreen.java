@@ -18,8 +18,8 @@ import com.z.loa.*;
 import com.z.loa.entity.npc.*;
 import com.z.loa.entity.player.*;
 import com.z.loa.manager.*;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.Comparator;
 
 public class GameScreen implements Screen {
 	private MyGdxGame game;

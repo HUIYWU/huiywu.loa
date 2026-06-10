@@ -3,14 +3,12 @@ package com.z.loa.entity.config;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.z.loa.Constants;
 import com.z.loa.data.ActionCarrier;
 import com.z.loa.data.ActionData;
-import com.z.loa.manager.FontManager;
 
 public class BattleActionConfig {
     private static ActionData data;
@@ -63,8 +61,6 @@ public class BattleActionConfig {
         }
         
         ActionCarrier carrier = getCarrierData(name);
-        String text = carrier.getActionString();
-        FontManager.updateFont(text);
         Array<String> actions = carrier.getActionArray();
         BattleActionConfig[] configs = new BattleActionConfig[actions.size];
         for (int i = 0; i < configs.length; i++) {
@@ -77,15 +73,6 @@ public class BattleActionConfig {
         return configs;
     }
     
-    @Deprecated
-    public static ActionData.Player getPlayerData(String name) {
-    	return data.players.get(name);
-    }
-    @Deprecated
-    public static ActionData.Enemy getEnemyData(String name) {
-    	return data.enemies.get(name);
-    }
-    
     public static ActionCarrier getCarrierData(String id) {
     	if(data.players.containsKey(id)) {
     		return data.players.get(id);
@@ -93,40 +80,6 @@ public class BattleActionConfig {
     		return data.enemies.get(id);
     	}
         return null;
-    }
-    
-    @Deprecated
-    public static BattleActionConfig createAttackConfig() {
-        BattleActionConfig config = new BattleActionConfig();
-        config.setEffectId("animation07003");
-        config.setActionName("战千屻普通攻击");
-        config.setEffectTriggerIndex(3);
-        config.setStateIndex(1);
-        config.setAimType(AimType.ENEMY_SINGLE);
-        config.setSize(453.4f, 342.0f);
-        config.setFlashDelayTime(0.2f);
-        config.setFlashCount(1);
-        config.setFlashDuration(0.2f);
-        config.setFlashRgb(new Vector3(1.0f, 1.0f, 1.0f));
-        return config;
-    }
-    
-    @Deprecated
-    public static BattleActionConfig createQiongQiConfig() {
-        BattleActionConfig config = new BattleActionConfig();
-        config.setEffectId("animation07001");
-        config.setActionName("[RED]穷奇招唤");
-        config.setTips("[RED]凝聚凶兽力量，发出猛烈咆哮，给予敌方全体毁灭打击。");
-        config.setStateIndex(2);
-        config.setAimType(AimType.ENEMY_ALL);
-        config.setSpecialPosition(true);
-        config.setPosition(0.0f, 56.5f);
-        config.setSize(790.0f, 540.0f);
-        config.setFlashDelayTime(0.8f);
-        config.setFlashCount(3);
-        config.setFlashDuration(0.6f);
-        config.setFlashRgb(new Vector3(0.235f, 0.0f, 0.392f));
-        return config;
     }
 
     private void setParameter(BattleActionConfig config, String id) {

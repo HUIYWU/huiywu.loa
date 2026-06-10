@@ -110,6 +110,20 @@ public class BaseEntity extends Actor {
     public void setRemainHp(int hp) {
         this.remainHp = hp;
     }
+    
+    public void decreaseRemainHp(int value) {
+    	this.remainHp -= value;
+        if(remainHp < 0) {
+        	remainHp = 0;
+        }
+    }
+    
+    public void increaseRemainHp(int value) {
+    	this.remainHp += value;
+        if(remainHp > maxHp) {
+        	remainHp = maxHp;
+        }
+    }
 
     public int getRemainHp() {
         return remainHp;
@@ -117,6 +131,20 @@ public class BaseEntity extends Actor {
 
     public void setRemainMp(int mp) {
         this.remainMp = mp;
+    }
+    
+    public void decreaseRemainMp(int value) {
+    	this.remainMp -= value;
+        if(remainMp < 0) {
+        	remainMp = 0;
+        }
+    }
+    
+    public void increaseRemainMp(int value) {
+    	this.remainMp += value;
+        if(remainMp > maxMp) {
+        	remainMp = maxMp;
+        }
     }
 
     public int getRemainMp() {
@@ -153,6 +181,8 @@ public class BaseEntity extends Actor {
 
     @Override
     public void act(float delta) {
+        //为Actor附加Action需调用父类act方法更新
+        super.act(delta);
         stateTime += delta;
         if (enabled) {
             elapsedTime += delta;

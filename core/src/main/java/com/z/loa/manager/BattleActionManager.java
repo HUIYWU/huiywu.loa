@@ -1,6 +1,7 @@
 package com.z.loa.manager;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
@@ -18,10 +19,6 @@ public class BattleActionManager {
         this.entities = entities;
         this.scene = scene;
         this.aims = new Array<BaseEntity>();
-    }
-    
-    public void bindAction() {
-    	
     }
     
     public Array<BaseEntity> getAims() {
@@ -69,6 +66,7 @@ public class BattleActionManager {
         }
     }
     
+    //通常用于玩家选择目标
     public Array<BaseEntity> checkAim(Array<CheckBox> boxes) {
         aims.clear();
         for(CheckBox box : boxes) {
@@ -77,17 +75,22 @@ public class BattleActionManager {
     	return aims;
     }
     
+    //通常用于敌方选择
     public Array<BaseEntity> selectAim(BattleActionConfig config, Array<BaseEntity> players) {
         aims.clear();
         BattleActionConfig.AimType type = config.getAimType();
         switch (type) {
             case ENEMY_SINGLE:
             case FRIEND_SINGLE:
-                aims.addAll(players);
+                aims.add(players.get(MathUtils.random(0, players.size - 1)));
                 break;
             case ENEMY_ALL:
             case FRIEND_ALL:
-                aims.addAll(players);
+                for(BaseEntity player_1 : players) {
+                	if(player_1.getBattleState() != BaseEntity.BattleState.DEFEATED) {
+                		aims.add(player_1);
+                	}
+                }
                 return null;
             default:
                 throw new IllegalArgumentException("config的aimType参数异常");
@@ -96,6 +99,7 @@ public class BattleActionManager {
     	return aims;
     }
     
+    @Deprecated
     public void triggerAction(BaseEntity target, BattleActionConfig config) {
     	target.setBattleState(BaseEntity.BattleState.values()[config.getStateIndex()]);
         target.setStateTime(0);
